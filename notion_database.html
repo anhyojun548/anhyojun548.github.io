@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Assistant (Polaris Office Style)</title>
+<style>
+    body {
+        margin: 0; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        color: #333;
+        background-color: #f7f7f7; 
+    }
+    /* 상단 헤더 */
+    header {
+        background: #ffffff;
+        border-bottom: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        height: 50px;
+    }
+    header .logo {
+        font-weight: bold;
+        color: #2b63c0;
+        font-size: 1.2em;
+    }
+    header .settings {
+        cursor: pointer;
+        font-size: 1.1em;
+        color: #2b63c0;
+    }
+    
+    /* 전체 레이아웃 */
+    .container {
+        display: flex;
+        height: calc(100vh - 50px);
+    }
+
+    /* 사이드바 */
+    .sidebar {
+        width: 300px;
+        background: #fcfcfc;
+        border-right: 1px solid #ddd;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+    }
+    .sidebar h2 {
+        font-size: 1.1em;
+        margin-bottom: 10px;
+        color: #333;
+    }
+    .input-group {
+        margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+    }
+    .input-group label {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+        color: #555;
+    }
+    .input-group input {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .sidebar .save-btn {
+        background: #2b63c0;
+        color: #fff;
+        text-align: center;
+        padding: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .sidebar .save-btn:hover {
+        background: #1f4d90;
+    }
+
+    /* 메인 영역 */
+    .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* 대화 영역 */
+    .chat-container {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+    }
+    .chat-message {
+        max-width: 70%;
+        margin-bottom: 15px;
+        line-height: 1.4;
+    }
+    .user-message {
+        background: #2b63c0;
+        color: #fff;
+        padding: 10px;
+        border-radius: 6px;
+        align-self: flex-end;
+        margin-left: auto;
+    }
+    .assistant-message {
+        background: #e8f1fc;
+        padding: 10px;
+        border-radius: 6px;
+        margin-right: auto;
+        color: #333;
+    }
+
+    /* 입력창 */
+    .input-area {
+        border-top: 1px solid #ddd;
+        background: #fff;
+        padding: 10px;
+        display: flex;
+    }
+    .input-area input[type="text"] {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .input-area button {
+        background: #2b63c0;
+        color: #fff;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        margin-left: 10px;
+        cursor: pointer;
+    }
+    .input-area button:hover {
+        background: #1f4d90;
+    }
+
+</style>
+</head>
+<body>
+    <header>
+        <div class="logo">AI Assistant</div>
+        <div class="settings">⚙</div>
+    </header>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Notion API 설정</h2>
+            <div class="input-group">
+                <label for="notion-api-key">Notion API Key</label>
+                <input type="text" id="notion-api-key" placeholder="예: secret_xxx...">
+            </div>
+            <div class="input-group">
+                <label for="notion-db-id">Notion url</label>
+                <input type="text" id="notion-db-id" placeholder="예: abcdef1234567890">
+            </div>
+            <div class="save-btn">저장</div>
+            
+            <p style="font-size:0.9em; color:#666;">
+                위 정보를 저장한 뒤, 채팅창에 질문을 입력하면  
+                해당 DB 기반으로 문서 생성 및 대화를 진행할 수 있습니다.
+            </p>
+        </div>
+        <div class="main">
+            <div class="chat-container" id="chat-container">
+                <div class="chat-message assistant-message">
+                    안녕하세요! 노션 DB기반 문서 도우미입니다. 질문이 있으면 말씀해주세요.
+                </div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="user-input" placeholder="여기에 질문을 입력하세요..."/>
+                <button id="send-btn">전송</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WindyFlo Full Chatbot -->
+    <windyflo-fullchatbot></windyflo-fullchatbot>
+    <script type="module">
+        import Chatbot from "https://cdn.jsdelivr.net/npm/windyflo-embed/dist/web.js"
+        Chatbot.initFull({
+            chatflowid: "70cba272-7a6b-497a-a2c0-d2f570934115",
+            apiHost: "https://www.windyflo.com",
+        })
+    </script>
+
+    <script>
+        const sendBtn = document.getElementById('send-btn');
+        const userInput = document.getElementById('user-input');
+        const chatContainer = document.getElementById('chat-container');
+
+        function sendMessage() {
+            const text = userInput.value.trim();
+            if (text) {
+                // 사용자 메시지 표시
+                const userMsg = document.createElement('div');
+                userMsg.className = 'chat-message user-message';
+                userMsg.textContent = text;
+                chatContainer.appendChild(userMsg);
+                userInput.value = '';
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // 여기서 백엔드 API 호출 및 응답 처리 로직 삽입 예정
+            }
+        }
+
+        sendBtn.addEventListener('click', () => {
+            sendMessage();
+        });
+
+        // 엔터 키를 눌렀을 때 메시지 전송
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
